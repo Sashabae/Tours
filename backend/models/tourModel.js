@@ -1,48 +1,55 @@
 const { sql } = require("../db");
 
-exports.getAllTours = async ({ limit, offset, category }) => {
-  let tours;
-  let totalCount;
+exports.getAllTours = async ({ limit, offset, category, search, date }) => {
+  let conditions = [];
 
   if (category) {
-    tours = await sql`
-      SELECT t.*, 
-      COALESCE(AVG(r.rating), 0)::numeric(3,2) AS average_rating
-      FROM tours t
-      LEFT JOIN reviews r ON r.tour_id = t.id
-      WHERE t.category = ${category}
-      GROUP BY t.id
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
-
-    const [{ count }] = await sql`
-      SELECT COUNT(*)::int as count
-      FROM tours
-      WHERE category = ${category}
-    `;
-
-    totalCount = count;
-  } else {
-    tours = await sql`
-      SELECT t.*, 
-      COALESCE(AVG(r.rating), 0)::numeric(3,2) AS average_rating
-      FROM tours t
-      LEFT JOIN reviews r ON r.tour_id = t.id
-      GROUP BY t.id
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
-
-    const [{ count }] = await sql`
-      SELECT COUNT(*)::int as count
-      FROM tours
-    `;
-
-    totalCount = count;
+    conditions.push(sql`t.category = ${category}`);
   }
 
-  return { tours, totalCount };
+  if (search) {
+    const likeTerm = `%${search}%`;
+    conditions.push(
+      sql`(t.name ILIKE ${likeTerm} OR t.description ILIKE ${likeTerm})`
+    );
+  }
+
+  if (date) {
+    // Filter tours that have at least one date on the given day
+    conditions.push(sql`EXISTS (
+      SELECT 1 FROM dates d 
+      WHERE d.tour_id = t.id AND DATE(d.tour_date) = ${date}
+    )`);
+  }
+
+  let whereClause = sql``;
+
+  if (conditions.length === 1) {
+    whereClause = sql`WHERE ${conditions[0]}`;
+  } else if (conditions.length > 1) {
+    whereClause = sql`WHERE ${conditions.reduce(
+      (acc, curr) => sql`${acc} AND ${curr}`
+    )}`;
+  }
+
+  const tours = await sql`
+    SELECT t.*,
+      COALESCE(AVG(r.rating), 0)::numeric(3,2) AS average_rating
+    FROM tours t
+    LEFT JOIN reviews r ON r.tour_id = t.id
+    ${whereClause}
+    GROUP BY t.id
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
+
+  const [{ count }] = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM tours t
+    ${whereClause}
+  `;
+
+  return { tours, totalCount: count };
 };
 
 exports.getTourById = async (id) => {

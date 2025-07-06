@@ -77,6 +77,7 @@ export default function TourDetails() {
           {tour.dates && (
             <div className="mt-4">
               <p className="text-lg">Dates:</p>
+              <p className="text-xs mb-2">(Month/Day/Year)</p>
               {tour.dates.length === 0 ? (
                 <p>No available dates for this tour</p>
               ) : (

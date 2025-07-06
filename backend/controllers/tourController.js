@@ -10,10 +10,11 @@ const AppError = require("../utils/appError");
 // GET ALL
 exports.getAllTours = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1; // page, default to 1
-    const limit = parseInt(req.query.limit) || 10; // items per page, default to 10
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    const category = req.query.category;
+
+    const { category, search, date } = req.query;
 
     if (isNaN(page) || isNaN(limit)) {
       throw new AppError("Page and limit must be numbers", 400);
@@ -23,6 +24,8 @@ exports.getAllTours = async (req, res, next) => {
       limit,
       offset,
       category,
+      search,
+      date,
     });
 
     const totalPages = Math.ceil(totalCount / limit);

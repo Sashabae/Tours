@@ -15,14 +15,13 @@ export default function EditTour() {
     price: "",
     category: "",
     duration: "",
-    dates: [], // array of { id, tour_date }
+    dates: [],
     image: "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Load tour data and convert dates into array with ids
   useEffect(() => {
     async function fetchTour() {
       try {
@@ -127,22 +126,6 @@ export default function EditTour() {
 
   if (loading) return <p>Loading tour data...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
-
-  // function formatDateForInput(isoDate) {
-  //   if (!isoDate) return "";
-
-  //   if (typeof isoDate !== "string") {
-  //     console.warn("formatDateForInput: expected string but got:", isoDate);
-  //     return "";
-  //   }
-
-  //   const [datePart, timePart] = isoDate.split("T");
-  //   if (!datePart || !timePart) return "";
-
-  //   const time = timePart.slice(0, 5); // "HH:mm"
-
-  //   return `${datePart}T${time}`;
-  // }
 
   return (
     <section className="max-w-xl mx-auto p-4">
